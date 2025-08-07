@@ -1,0 +1,19 @@
+{
+  "name": "ferreteria-api",
+  "version": "1.0.0",
+  "description": "Practica de desarrollo web 2",
+  "main": "src/server.js",
+  "repository": "https://github.com/KEVIN01306/ferreteria-api.git",
+  "author": "(KEVIN01306 <kevin60sanchez31@gmail.com>)",
+  "license": "MIT",
+  "type": "module",
+  "dependencies": {
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "joi": "^18.0.0",
+    "nodemon": "^3.1.10"
+  },
+  "scripts": {
+    "dev": "nodemon src/server.js"
+  }
+}
