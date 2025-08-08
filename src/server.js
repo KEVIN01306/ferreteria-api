@@ -1,16 +1,14 @@
-import express from 'express';
+import app from "./app.js";
 
 
-const app = express();
 
-const PORT = 5000
+async function main() {
+    try{
+        app.listen(process.env.PORT, () => console.log('Sevidor iniciado en: ' + "http://localhost:"+process.env.PORT))
+    }catch (error){
+        console.error("Error: "+ error.message)
+    }
+    
+};
 
-app.get('/',(req,res) => {
-    res.json({ message: "Que tal"})
-})
-
-app.use(express.json());
-
-
-app.listen(PORT, () => console.log('Hola'))
-
+main();
