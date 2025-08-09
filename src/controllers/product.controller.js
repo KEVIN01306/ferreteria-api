@@ -1,137 +1,115 @@
-import { products } from "../mock-data/product.data.js";
+import {
+    getAllProducts,
+    getProductById,
+    createProduct,
+    updateProduct,
+    deleteProduct
+} from "../service/product.service.js";
+import Joi from "joi";
 
-const getProductsHandler = async (req,res) => {
-    try{
-        let response = {
+const productSchema = Joi.object({
+    id: Joi.number().integer().min(1).required(),
+    name: Joi.string().min(2).max(100).required(),
+    description: Joi.string().min(5).max(255).required(),
+    price: Joi.number().min(0).required(),
+    stock: Joi.number().integer().min(0).required()
+});
+
+const getProductsHandler = async (req, res) => {
+    try {
+        const products = getAllProducts();
+        res.status(200).json({
             message: "success",
             data: {
                 products: products,
                 count: products.length
             }
-        };
-        res.status(200).json(response);
-    }catch (error){
-        console.error(error);
-        return res.status(500).json({
-            message: "Error interno del servidor"
         });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Internal server error" });
     }
-}
+};
 
 
-const getPoductHandlerByParam = async (req,res) => {
-    try{
-
+const getPoductHandlerByParam = async (req, res) => {
+    try {
         const id = req.params.id;
-
-        let response = {}
-
-        const prodcut = products.find( p => p.id == id)
-        if (!prodcut){
-            response = {
-                message: "Producto no encontrado",
-            };
-            return res.status(404).json(response)
+        const product = getProductById(id);
+        if (!product) {
+            return res.status(404).json({ message: "product not found" });
         }
-
-        response = {
+        res.status(200).json({
             message: "success",
-            data: prodcut
-        };
-        res.status(200).json(response);
-    }catch (error){
-        console.error(error);
-        return res.status(500).json({
-            message: "Error interno del servidor"
+            data: product
         });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Internal server error" });
     }
-}
+};
 
-const postProductHandler = async (req,res) => {
-    try{
-        const newProduct = req.body
-
-        let response = {}
-        const product = products.find( p => p.id == newProduct.id );
-        if (product) {
-            response = {
-                message: "El producto ya existe"
-            }
-            return res.status(400).json(response)
+const postProductHandler = async (req, res) => {
+    try {
+        const newProduct = req.body;
+        const { error } = productSchema.validate(newProduct);
+        if (error) {
+            return res.status(400).json({
+                message: "Validation error",
+                details: error.details.map(d => d.message)
+            });
         }
-
-        products.push(newProduct);
-
-        response = {
+        const created = createProduct(newProduct);
+        if (!created) {
+            return res.status(400).json({ message: "Product already exists" });
+        }
+        res.status(201).json({
             message: "success",
-            data: {
-                product: newProduct.id,
-            }
-        }
-        return res.status(201).json(response)
-    }catch (error) {
-        console.error(error);
-        return res.status(500).json({
-            message: "Error interno del servidor"
+            data: { product: created.id }
         });
+    } catch (error) {
+        console.error(error);
+        return res.status(500).json({ message: "Internal server error" });
     }
-}
+};
 
 const putProductHandler = async (req, res) => {
     try {
         const id = req.params.id;
         const updatedProduct = req.body;
-
-        let response = {};
-        const index = products.findIndex(p => p.id == id);
-
-        if (index === -1) {
-            response = {
-                message: "Producto no encontrado"
-            };
-            return res.status(404).json(response);
+        const partialSchema = productSchema.fork(["id"], field => field.forbidden());
+        const { error } = partialSchema.validate(updatedProduct, { allowUnknown: false });
+        if (error) {
+            return res.status(400).json({
+                message: "Validation error",
+                details: error.details.map(d => d.message)
+            });
         }
-
-        products[index] = { ...products[index], ...updatedProduct };
-
-        response = {
+        const updated = updateProduct(id, updatedProduct);
+        if (!updated) {
+            return res.status(404).json({ message: "Product not found" });
+        }
+        res.status(200).json({
             message: "success",
-            data: products[index]
-        };
-        return res.status(200).json(response);
+            data: updated
+        });
     } catch (error) {
         console.error(error);
-        return res.status(500).json({
-            message: "Error interno del servidor"
-        });
+        return res.status(500).json({ message: "Internal server error" });
     }
 };
 
 const deleteProductHandler = async (req, res) => {
     try {
         const id = req.params.id;
-
-        let response = {};
-        const index = products.findIndex(p => p.id == id);
-
-        if (index === -1) {
-            response = {
-                message: "Producto no encontrado"
-            };
-            return res.status(404).json(response);
+        const deleted = deleteProduct(id);
+        if (!deleted) {
+            return res.status(404).json({ message: "Product not found" });
         }
-
-        products.splice(index, 1);
-
-        response = {
-            message: "Producto eliminado correctamente"
-        };
-        return res.status(200).json(response);
+        res.status(200).json({ message: "Product deleted successfully" });
     } catch (error) {
         console.error(error);
-        return res.status(500).json({
-            message: "Error interno del servidor"
-        });
+        return res.status(500).json({ message: "Internal server error" });
     }
 };
 
